@@ -6,11 +6,11 @@ import Rotuer from "./system/Rotuer/Rotuer";
 
 const Wrapper = styled.div`
   box-sizing: border-box;
-  background-color: white;
   color: ${props => props.theme.textColor};
   position: fixed;
   height: 100%;
   width: 100%;
+  background-color: white;
   border: 1px solid lightgray;
   overflow: hidden;
 `;

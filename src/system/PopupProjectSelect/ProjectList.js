@@ -29,7 +29,6 @@ const ListItem = styled.div`
 
 const NoResult = styled.div`
   width: 100%;
-  min-height: 40rem;
   height: 100%;
   display: flex;
   align-items: center;

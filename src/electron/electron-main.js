@@ -52,6 +52,8 @@ const config = {
   transparent: true,
   movable: true,
   acceptFirstMouse: true,
+  width: 600,
+  height: 100,
   webPreferences: {
     nodeIntegration: true
   }
@@ -106,7 +108,7 @@ function createWindow() {
         }
         win.webContents.send("login_res", datas.success);
       } catch (e) {
-        console.log("e : ", e);
+        archive.log(e.message, "error");
         setDefaultDisplay();
         win.webContents.send("login_res", false);
       }
@@ -163,14 +165,13 @@ function createWindow() {
       setDefaultDisplay();
       addProjectFolrder = "";
     } catch (e) {
-      console.log("e : ", e.message);
+      archive.log(e.message, "error");
       setDefaultDisplay();
       addProjectFolrder = "";
     }
   });
 
   ipcMain.on("open_exlpore", (event, arg) => {
-    console.log("open_exlpore:", arg);
     try {
       openFileExplore(arg || "");
     } catch (e) {
@@ -181,8 +182,6 @@ function createWindow() {
   ipcMain.on("select_path", async (event, arg) => {
     try {
       const datas = await getProejctFolderData(arg);
-      console.log(arg);
-
       win.webContents.send("popup_open_res", datas.data);
     } catch (e) {}
   });
@@ -190,8 +189,6 @@ function createWindow() {
   ipcMain.on("get_project_list", async (event, arg) => {
     try {
       const datas = await getProejctFolderData(arg);
-      console.log("datas:", datas);
-
       win.webContents.send("res_project_list", datas.data.files);
     } catch (e) {}
   });
@@ -217,7 +214,7 @@ function createWindow() {
       await win.webContents.send("open_file_select_res", arg.length);
       selectData = arg;
     } catch (e) {
-      console.log(e);
+      archive.log(e.message, "error");
     }
   });
 
@@ -225,10 +222,10 @@ function createWindow() {
     try {
       const data = await NET.addProjectFolder(arg);
       addProjectFolrder = arg;
-      console.log("data: ", data);
       win.webContents.send("add_project_folder_res", data);
+      setPopupDisplay();
     } catch (e) {
-      console.log("e:", e);
+      archive.log(e.message, "error");
     }
   });
 
@@ -268,7 +265,7 @@ function createWindow() {
           setDefaultDisplay();
         });
     } catch (e) {
-      console.log("e:", e);
+      archive.log(e.message, "error");
     }
   });
 
@@ -280,6 +277,14 @@ function createWindow() {
     closeProgressPopup();
   });
 
+  ipcMain.on("set_cumstom_height", e => {
+    setCustomDisplay();
+  });
+
+  ipcMain.on("set_popup_display", () => {
+    setPopupDisplay();
+  });
+
   // if (isDev) win.webContents.openDevTools();
 }
 
@@ -288,8 +293,6 @@ async function getProejctFolderData(arg) {
   if (!datas.success) {
     datas = await NET.getProjectData(arg);
   }
-  console.log("결과:", datas, "arg: ", arg);
-
   return datas;
 }
 
@@ -312,10 +315,7 @@ function openProgressPopup() {
       });
   child.loadURL(startUrl);
 
-  console.log("start url: ", startUrl);
-
   child.once("ready-to-show", async () => {
-    console.log("child show?");
     childOpen = true;
     child.show();
     const list = await resolveMapToArray();
@@ -349,8 +349,8 @@ async function login() {
       pw: pw
     };
     NET.login(qurey);
-  } catch (err) {
-    console.log("err:", err);
+  } catch (e) {
+    archive.log(e.message, "error");
   }
 }
 
@@ -365,8 +365,8 @@ async function fileUpload(_path) {
       dest = String(dest).replace(/\//g, "\\");
       getProgressData(replace_path, dest);
     }
-  } catch (err) {
-    console.log("err:", err);
+  } catch (e) {
+    archive.log(e.message, "error");
   }
 }
 
@@ -409,7 +409,6 @@ function getProgressData(_path, dest) {
   try {
     // 폴더
     if (fs_extra.lstatSync(_path).isDirectory()) {
-      console.log("-- folder");
 
       // #1. 최대 50개를 동시에 처리한다는 의미
       const MAX_COUNT = 30;
@@ -421,8 +420,6 @@ function getProgressData(_path, dest) {
       // 스트림이 하나 종료할 때마다 처리 가능한 스트림을 하나 가용한다.
       let queueObserver = new event.EventEmitter();
       queueObserver.on("release", () => {
-        console.log("대충 왔다는 뜻");
-
         // #4. queue에 한자리 비었다는 신호.
         q.release();
 
@@ -491,7 +488,7 @@ function getProgressData(_path, dest) {
 
             writeStream.on("error", e => {
               queueObserver.emit("release");
-              console.log("write error : ", e);
+              archive.log(e.message, "error");
             });
 
             writeStream.on("close", async () => {
@@ -518,8 +515,6 @@ function getProgressData(_path, dest) {
     }
     // 파일
     else {
-      console.log("-- file");
-
       const plus = _path.substring(_path.length);
       const copyDest = dest + plus; // 복사된 경로
 
@@ -528,8 +523,8 @@ function getProgressData(_path, dest) {
       let valueSize = 0;
 
       const readStream = fs.createReadStream(_path);
-      readStream.on("error", e => {
-        console.log("read error : ", e);
+      readStream.on("error", e => {      
+        archive.log(e.message, "error");
       });
       readStream.on("data", async data => {
         size += data.length;
@@ -551,7 +546,7 @@ function getProgressData(_path, dest) {
       const writeStream = fs.createWriteStream(copyDest, {});
 
       writeStream.on("error", e => {
-        console.log("write error : ", e);
+        archive.log(e.message, "error");
       });
 
       writeStream.on("close", async () => {
@@ -571,6 +566,22 @@ function getProgressData(_path, dest) {
   }
 }
 
+function setCustomDisplay() {
+  const { width, height } = electron.screen.getPrimaryDisplay().size;
+  const mainWidth = 600;
+  const mainHeight = 290;
+  const x = width / 2 - mainWidth / 2;
+  const y = height / 2 - mainHeight / 2;
+
+  win.setBounds({
+    x,
+    y,
+    width: mainWidth,
+    height: mainHeight
+  });
+  win.center();
+}
+
 function setDefaultDisplay() {
   const { width, height } = electron.screen.getPrimaryDisplay().size;
   win.setAlwaysOnTop(true);
@@ -579,15 +590,12 @@ function setDefaultDisplay() {
 
 function setPopupDisplay() {
   const bounds = win.getContentSize();
-  console.log(bounds);
   win.setAlwaysOnTop(false);
-  win.setSize(600, 750);
+  win.setSize(600, 750, true);
   win.center();
 }
 
 async function ismountAble(endAction) {
-  console.log("drive는 현재 이렇습니다 형님", drive);
-  console.log("endAction", endAction);
   let isMount = false;
 
   try {
@@ -595,14 +603,12 @@ async function ismountAble(endAction) {
       .find(`${SERVER_PATH}\\sv`)
       .then(data => {
         if (data) {
-          console.log(" >>> mount data : ", data);
           isMount = data.length !== 0;
           drive = data ? data[0] : "";
         }
       })
       .catch(e => {});
 
-    console.log("isMount:", isMount);
     if (!isMount) {
       win.webContents.send("open_drivemoumt_popup", endAction || "");
       setPopupDisplay();
@@ -611,7 +617,7 @@ async function ismountAble(endAction) {
       return true;
     }
   } catch (e) {
-    console.log("e : ", e);
+    archive.log(e.message, "error");
   }
 }
 
@@ -621,8 +627,6 @@ async function mountFolder(drive_) {
 
     const defaultPath = `${SERVER_PATH}\\sv`;
     const driveLetter = await networkDrive.mount(defaultPath, drive, id, pw);
-
-    console.log(driveLetter + "에 마운트 됨!");
     setDefaultDisplay();
     archive.log("driveLetter! : " + driveLetter);
   } catch (e) {
@@ -640,7 +644,6 @@ async function openFileExplore(path_) {
     setDefaultDisplay();
   }
   if (path_) {
-    console.log(`start "${drive}:\\${path_}"`);
     require("child_process").exec(`start "" "${drive}:\\${path_}"`);
   } else {
     require("child_process").exec(`start ${drive}:\\`);
@@ -649,25 +652,37 @@ async function openFileExplore(path_) {
 
 let tray = null;
 app.on("ready", async () => {
+  let isUpdate = false;
 
   // 업데이트 로직 추가
   try {
-      const info = await autoUpdater.checkForUpdatesAndNotify();
-      archive.log('checkForUpdatesAndNotify');
-      archive.log(JSON.stringify(info));
+      const info = await autoUpdater.checkForUpdates();
+      archive.log('checkForUpdates');
+      archive.log("info : ", info);
 
-      autoUpdater.on('update-downloaded', info => {
+      const updateInfo = JSON.stringify(info).updateInfo;
+      if(updateInfo != undefined) {
+        isUpdate = true;
+      }
+      archive.log("updateInfo : ", updateInfo);
+      // updateInfo.releaseDate --> 업데이트 된 날짜(ex. 2019-11-01T08:25:09.540Z)
+      // updateInfo.releaseName --> 업데이트 명칭
+      // updateInfo.releaseNotes --> 업데이트 내용(ex. <p>업데이트 되었습니다.<br> 내용은 이겁니다.</p>)
+
+      autoUpdater.on('update-downloaded', (info) => {
           const quitAndInstalled = autoUpdater.quitAndInstall();
           archive.log('quitAndInstalled');
-          archive.log(quitAndInstalled);
+      });
+      
+      autoUpdater.on('checking-for-update', () => {
+          archive.log('checking-for-update');
       });
 
-      autoUpdater.on('update-available', arg => {
+      autoUpdater.on('update-available', (info) => {
           archive.log('update-available');
-          archive.log(arg);
       });
 
-      autoUpdater.on("update-not-available", arg => {
+      autoUpdater.on("update-not-available", () => {
           archive.log("update-not-available");
           archive.log(arg);
           archive.log("");
@@ -691,6 +706,11 @@ app.on("ready", async () => {
       archive.log(error.message, "error");
   }
   finally {
+
+    if(isUpdate) {
+
+    }
+    else {
       createWindow();
       tray = new Tray(trayIcon);
       const contextMenu = Menu.buildFromTemplate([
@@ -711,6 +731,7 @@ app.on("ready", async () => {
       tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
       tray.setContextMenu(contextMenu);
       tray.setHighlightMode("always");
+    }
   }
 });
 

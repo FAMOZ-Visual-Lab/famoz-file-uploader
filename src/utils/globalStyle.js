@@ -134,6 +134,17 @@ const GlobalStyle = createGlobalStyle`
     }
 
     body {
+        -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none;   /* Chrome/Safari/Opera */
+        -khtml-user-select: none;    /* Konqueror */
+        -moz-user-select: none;      /* Firefox */
+        -ms-user-select: none;       /* Internet Explorer/Edge*/
+        user-select: none;          /* Non-prefixed version, currently 
+                                        not supported by any browser */
+        -webkit-user-drag: none;
+        -khtml-user-drag: none;
+        -moz-user-drag: none;
+        -o-user-drag: none;
         line-height: 1;
         background: white;
         color: ${themes.textColor};

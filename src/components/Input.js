@@ -3,9 +3,8 @@ import styled from "styled-components";
 
 const InputWrapper = styled.input`
   width: 100%;
-  height: 100%;
+  height: 5rem;
   text-align: left;
-  min-height: 3rem;
   display: flex;
   align-items: center;
   justify-content: left;

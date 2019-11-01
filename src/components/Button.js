@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 const ButtonWrapper = styled.div`
   width: 100%;
@@ -14,12 +14,15 @@ const ButtonWrapper = styled.div`
   justify-content: center;
   cursor: pointer;
 
-  &:disabled {
-    border: 1px solid lightgray;
-    box-sizing: border-box;
-    background-color: transparent;
-    color: ${props => props.theme.textColor};
-  }
+  ${props =>
+    props.disabled &&
+    css`
+      border: 1px solid lightgray;
+      box-sizing: border-box;
+      background-color: transparent;
+      color: ${props => props.theme.textColor};
+      cursor: default;
+    `}
 
   &:hover {
     opacity: 0.9;

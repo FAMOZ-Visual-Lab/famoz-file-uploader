@@ -1,6 +1,6 @@
 {
   "name": "famoz-file-management-app",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "author": {
     "name": "FAMOZ Visual Lab",
     "email": "web@famoz.co.kr",
@@ -109,7 +109,7 @@
     "dist": "yarn run react-build && electron-builder .",
     "electron": "ELECTRON_START_URL=http://localhost:3000 && electron .",
     "electron-dev": "set DEBUG_MODE=DEBUG && concurrently \"yarn react-start\" \"wait-on http://localhost:3000 && electron .\"",
-    "pack:win": "yarn run react-build && node ./builder.js windows"
+    "pack:win": "yarn run react-build && node ./builder.js windows --always"
   },
   "eslintConfig": {
     "extends": "react-app"

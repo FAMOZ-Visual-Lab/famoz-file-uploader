@@ -22,7 +22,7 @@ const moment = require("moment");
 
 const Wrapper = styled.div`
   width: 100%;
-  height: 100%;
+  height: calc(100% - 7rem);
   background-color: white;
   box-sizing: border-box;
   padding: 2rem;
@@ -37,8 +37,7 @@ const Title = styled.div`
 
 const ScrollWrapper = styled.div`
   width: 100%;
-  max-height: 42rem;
-  height: 100%;
+  height: ${props => `calc(100% - ${props.minus}rem)`};
   margin: 1.5rem 0;
   overflow-y: auto;
 `;
@@ -69,12 +68,15 @@ const Warning = styled.p`
   font-size: 1.6rem;
   color: red;
   text-align: left;
+  margin: 1.5rem 0;
 `;
 
 const Description = styled.p`
   font-size: 1.5rem;
   margin: 1rem 0;
 `;
+
+const Buttons = styled.div``;
 
 class PopupProjectSelect extends Component {
   state = {
@@ -325,6 +327,7 @@ class PopupProjectSelect extends Component {
       } else {
         this.setState({ innerPopup: false }, () => {
           this.props.setStateHandler("innerPopup", false);
+          this.ipcRenderer.send("set_popup_display");
         });
       }
       return;
@@ -373,7 +376,9 @@ class PopupProjectSelect extends Component {
   };
 
   onClickAddFolderButton = () => {
-    this.setState({ innerPopup: "add_folder", newFolderName: "" });
+    this.setState({ innerPopup: "add_folder", newFolderName: "" }, () => {
+      this.ipcRenderer.send("set_cumstom_height");
+    });
   };
 
   onChangeFolderName = e => {
@@ -449,7 +454,14 @@ class PopupProjectSelect extends Component {
               }
             />
           </Path>
-          <ScrollWrapper>
+          <ScrollWrapper
+            minus={
+              this.props.type === "project" &&
+              this.isAbleNewProjectFolder(this.state.selectProject)
+                ? "20"
+                : "14"
+            }
+          >
             <ProjectList
               project={this.state.project}
               selectProject={this.state.selectProject}
@@ -457,14 +469,6 @@ class PopupProjectSelect extends Component {
               setStateHandler={this.setStateHandler}
             />
           </ScrollWrapper>
-          {this.isAbleNewProjectFolder(this.state.selectProject) ? (
-            <AddFolderButton onClick={this.onClickAddFolderButton}>
-              <Icon>folder</Icon>
-              <Label>새 프로젝트 폴더 추가하기</Label>
-            </AddFolderButton>
-          ) : (
-            <React.Fragment />
-          )}
         </React.Fragment>
       );
     }
@@ -472,6 +476,9 @@ class PopupProjectSelect extends Component {
 
   isAbleNewProjectFolder = selectProject => {
     if (this.props.type === "project") {
+      if (this.state.innerPopup === "add_folder") {
+        return false;
+      }
       if (selectProject && selectProject !== null) {
         let path = this.path;
         if (path) {
@@ -532,11 +539,21 @@ class PopupProjectSelect extends Component {
     return (
       <Wrapper>
         {this.renderPopupContents(this.state.innerPopup)}
-        <PopupButton
-          okDisabled={this.isDisabled()}
-          innerPopup={this.state.innerPopup}
-          onClickButton={this.onClickButton}
-        />
+        <Buttons>
+          {this.isAbleNewProjectFolder(this.state.selectProject) ? (
+            <AddFolderButton onClick={this.onClickAddFolderButton}>
+              <Icon>folder</Icon>
+              <Label>새 프로젝트 폴더 추가하기</Label>
+            </AddFolderButton>
+          ) : (
+            <React.Fragment />
+          )}
+          <PopupButton
+            okDisabled={this.isDisabled()}
+            innerPopup={this.state.innerPopup}
+            onClickButton={this.onClickButton}
+          />
+        </Buttons>
       </Wrapper>
     );
   }

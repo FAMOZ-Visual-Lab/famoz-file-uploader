@@ -42,6 +42,7 @@ const ListContainer = styled.ul`
 
 const Input = styled(_Input)`
   width: 90%;
+  height: 3rem;
 `;
 
 const NoResult = styled.div`
