@@ -7,6 +7,7 @@
   dialog,
   nativeImage
 } = require("electron");
+const autoUpdater = require("electron-updater").autoUpdater;
 const fs = require("fs");
 const fs_extra = require("fs-extra");
 const electron = require("electron");
@@ -19,9 +20,6 @@ const path = require("path");
 const isDev = require("electron-is-dev");
 const networkDrive = require("windows-network-drive");
 const moment = require("moment");
-
-const autoUpdater = require("./electron-update");
-autoUpdater();
 
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 app.commandLine.appendSwitch("enable-transparent-visuals", "disable-gpu");
@@ -650,27 +648,70 @@ async function openFileExplore(path_) {
 }
 
 let tray = null;
-app.on("ready", () => {
-  createWindow();
-  tray = new Tray(trayIcon);
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "앱 닫기",
-      type: "normal",
-      click: () => {
-        win = null;
-        app.quit();
-      }
-    }
-  ]);
+app.on("ready", async () => {
 
-  tray.on("click", () => {
-    win.isVisible() ? win.hide() : win.show();
-  });
+  // 업데이트 로직 추가
+  try {
+      const info = await autoUpdater.checkForUpdatesAndNotify();
+      archive.log('checkForUpdatesAndNotify');
+      archive.log(JSON.stringify(info));
 
-  tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
-  tray.setContextMenu(contextMenu);
-  tray.setHighlightMode("always");
+      autoUpdater.on('update-downloaded', info => {
+          const quitAndInstalled = autoUpdater.quitAndInstall();
+          archive.log('quitAndInstalled');
+          archive.log(quitAndInstalled);
+      });
+
+      autoUpdater.on('update-available', arg => {
+          archive.log('update-available');
+          archive.log(arg);
+      });
+
+      autoUpdater.on("update-not-available", arg => {
+          archive.log("update-not-available");
+          archive.log(arg);
+          archive.log("");
+      });
+
+      autoUpdater.on("download-progress", arg => {
+          archive.log("<download-progress>");
+          archive.log(arg);
+          archive.log("");
+      });
+
+      autoUpdater.on("error", error => {
+          archive.log("error");
+          archive.log(error.message);
+          archive.log(error.stack);
+          archive.log("");
+      });
+  }
+  catch (error) {
+      archive.log('autoupdate failed');
+      archive.log(error.message, "error");
+  }
+  finally {
+      createWindow();
+      tray = new Tray(trayIcon);
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: "앱 닫기",
+          type: "normal",
+          click: () => {
+            win = null;
+            app.quit();
+          }
+        }
+      ]);
+
+      tray.on("click", () => {
+        win.isVisible() ? win.hide() : win.show();
+      });
+
+      tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
+      tray.setContextMenu(contextMenu);
+      tray.setHighlightMode("always");
+  }
 });
 
 app.on("window-all-closed", () => {
