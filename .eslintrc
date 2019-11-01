@@ -1,0 +1,31 @@
+{
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "plugins": ["react"],
+  "rules": {
+    "indent": "off",
+    "linebreak-style": ["error", "windows"],
+    "quotes": ["error", "double"],
+    "semi": ["error", "always"],
+    "no-unused-vars": "off",
+    "max-len": "off",
+    "import/prefer-default-export": "off",
+    "no-alert": "off",
+    "curly": "off",
+    "class-methods-use-this": "off",
+    "no-shadow": "off",
+    "no-use-before-define": "off",
+    "array-bracket-newline": "off",
+    "array-element-newline": "off"
+  }
+}
