@@ -20,6 +20,9 @@ const isDev = require("electron-is-dev");
 const networkDrive = require("windows-network-drive");
 const moment = require("moment");
 
+const autoUpdater = require("./electron-update");
+autoUpdater();
+
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 app.commandLine.appendSwitch("enable-transparent-visuals", "disable-gpu");
 
