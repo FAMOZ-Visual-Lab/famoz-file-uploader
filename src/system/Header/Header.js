@@ -149,7 +149,7 @@ class Header extends Component {
         </LogoWrapper>
         <TitleWrapper>
           <FlexWrapper>
-            <Title>파모즈 파일 관리자22</Title>
+            <Title>파모즈 파일 관리자</Title>
             <SubTitle>Famoz File Manager</SubTitle>
           </FlexWrapper>
         </TitleWrapper>

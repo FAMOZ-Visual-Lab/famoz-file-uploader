@@ -33,7 +33,6 @@ else {
   app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
   app.commandLine.appendSwitch("enable-transparent-visuals", "disable-gpu");
 
-  const archive = require("./archive");
   // const { SERVER_PATH } = require("../configs/config");
 
   const SERVER_PATH = "\\\\FAMOZ_NAS";
@@ -116,7 +115,7 @@ else {
           }
           win.webContents.send("login_res", datas.success);
         } catch (e) {
-          archive.log(e.message, "error");
+          log.error(e.message);
           setDefaultDisplay();
           win.webContents.send("login_res", false);
         }
@@ -173,7 +172,7 @@ else {
         setDefaultDisplay();
         addProjectFolrder = "";
       } catch (e) {
-        archive.log(e.message, "error");
+        log.error(e.message);
         setDefaultDisplay();
         addProjectFolrder = "";
       }
@@ -222,7 +221,7 @@ else {
         await win.webContents.send("open_file_select_res", arg.length);
         selectData = arg;
       } catch (e) {
-        archive.log(e.message, "error");
+        log.error(e.message);
       }
     });
 
@@ -233,7 +232,7 @@ else {
         win.webContents.send("add_project_folder_res", data);
         setPopupDisplay();
       } catch (e) {
-        archive.log(e.message, "error");
+        log.error(e.message);
       }
     });
 
@@ -241,17 +240,10 @@ else {
       try {
         //arg[0]: Z, F, G...
         //arg[1]: endAction
-        archive.log("arg[0] : " + arg[0]);
-        archive.log("arg[1] : " + arg[1]);
-
         networkDrive
           .unmount(arg[0])
           .then(unm => {
-            archive.log("then 직후 입니다! : " + unm);
-
             mountFolder(arg[0]).then(async res => {
-              archive.log("mountFolder 함수 실행 후! : " + res);
-
               if (arg[1] === "open_explore") {
                 openFileExplore(innerPath || "");
                 win.webContents.send("re_popup_close");
@@ -268,12 +260,12 @@ else {
               setDefaultDisplay();
             });
           })
-          .catch(err => {
-            archive.log(err, "error");
+          .catch(e => {
+            log.error(e.message);
             setDefaultDisplay();
           });
       } catch (e) {
-        archive.log(e.message, "error");
+        log.error(e.message);
       }
     });
 
@@ -358,7 +350,7 @@ else {
       };
       NET.login(qurey);
     } catch (e) {
-      archive.log(e.message, "error");
+      log.error(e.message);
     }
   }
 
@@ -374,7 +366,7 @@ else {
         getProgressData(replace_path, dest);
       }
     } catch (e) {
-      archive.log(e.message, "error");
+      log.error(e.message);
     }
   }
 
@@ -496,7 +488,7 @@ else {
 
               writeStream.on("error", e => {
                 queueObserver.emit("release");
-                archive.log(e.message, "error");
+                log.error(e.message);
               });
 
               writeStream.on("close", async () => {
@@ -532,7 +524,7 @@ else {
 
         const readStream = fs.createReadStream(_path);
         readStream.on("error", e => {      
-          archive.log(e.message, "error");
+          log.error(e.message);
         });
         readStream.on("data", async data => {
           size += data.length;
@@ -554,7 +546,7 @@ else {
         const writeStream = fs.createWriteStream(copyDest, {});
 
         writeStream.on("error", e => {
-          archive.log(e.message, "error");
+          log.error(e.message);
         });
 
         writeStream.on("close", async () => {
@@ -625,7 +617,7 @@ else {
         return true;
       }
     } catch (e) {
-      archive.log(e.message, "error");
+      log.error(e.message);
     }
   }
 
@@ -636,7 +628,6 @@ else {
       const defaultPath = `${SERVER_PATH}\\sv`;
       const driveLetter = await networkDrive.mount(defaultPath, drive, id, pw);
       setDefaultDisplay();
-      archive.log("driveLetter! : " + driveLetter);
     } catch (e) {
       throw e;
     }
@@ -677,22 +668,40 @@ else {
           // info.bytesPerSecond;
           log.info("download : "+ info);
         });
-                
+
+        // info.releaseDate --> 업데이트 된 날짜(ex. 2019-11-01T08:25:09.540Z)
+        // info.releaseName --> 업데이트 명칭
+        // info.releaseNotes --> 업데이트 내용(ex. <p>업데이트 되었습니다.<br> 내용은 이겁니다.</p>)
+        autoUpdater.checkForUpdates();
         autoUpdater.on("checking-for-update", () => {
             log.info("<< checking-for-update >>");
+                
+        });
+
+
+        /**
+         * 사용 가능한 업데이트 감지
+         */
+        autoUpdater.on('update-available', () => {
+            log.info("<update-available>\n");
 
             const options = {
               type: 'info',
               title: '파모즈 파일 관리자 업데이트 확인',
-              message: '업데이트가 감지되었습니다. 확인 버튼을 누르면 업데이트를 진행하니 작업이 모두 종료되면 눌러주세요.'
+              message: '업데이트가 감지되었습니다. 확인 버튼을 누르면 업데이트를 진행합니다.'
             };
 
             // 확인을 누르면 업데이트를 진행
             dialog.showMessageBox(options).then(async ()=> {
+              
+              autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+                  log.info("<update-downloaded>");
+                  log.info("quitAndInstall()");
+                  autoUpdater.quitAndInstall();
+              });
+
               const path = await autoUpdater.downloadUpdate();
               log.info("path : " + path);
-
-              archive.log('quitAndInstalled : ' + quitAndInstalled);
             }).catch(e => {
             });
 
@@ -700,24 +709,34 @@ else {
                 downloadProgress = download.percent;
                 autoUpdater.logger.info("pers: " + downloadProgress);
             });
-
-                
-            // info.releaseDate --> 업데이트 된 날짜(ex. 2019-11-01T08:25:09.540Z)
-            // info.releaseName --> 업데이트 명칭
-            // info.releaseNotes --> 업데이트 내용(ex. <p>업데이트 되었습니다.<br> 내용은 이겁니다.</p>)
-
-            autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
-                log.info("<update-downloaded>");
-
-            });
         });
 
-        autoUpdater.on('update-available', () => {
-            log.info("<update-available>\n");
-        });
-
+        /**
+         * 사용 가능한 업데이트가 없음
+         */
         autoUpdater.on("update-not-available", () => {
             log.info("<update-not-available>\n");
+            
+            createWindow();
+            tray = new Tray(trayIcon);
+            const contextMenu = Menu.buildFromTemplate([
+              {
+                label: "앱 닫기",
+                type: "normal",
+                click: () => {
+                  win = null;
+                  app.quit();
+                }
+              }
+            ]);
+
+            tray.on("click", () => {
+              win.isVisible() ? win.hide() : win.show();
+            });
+
+            tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
+            tray.setContextMenu(contextMenu);
+            tray.setHighlightMode("always");
         });
 
         autoUpdater.on("error", error => {
@@ -727,35 +746,10 @@ else {
             log.error(error.stack);
         });
 
-        autoUpdater.checkForUpdates();
     }
     catch (error) {
         log.info("autoupdate failed");
         log.error(error.message, "error");
-    }
-    finally {
-      if(!isUpdate) {
-        createWindow();
-        tray = new Tray(trayIcon);
-        const contextMenu = Menu.buildFromTemplate([
-          {
-            label: "앱 닫기",
-            type: "normal",
-            click: () => {
-              win = null;
-              app.quit();
-            }
-          }
-        ]);
-
-        tray.on("click", () => {
-          win.isVisible() ? win.hide() : win.show();
-        });
-
-        tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
-        tray.setContextMenu(contextMenu);
-        tray.setHighlightMode("always");
-      }
     }
   });
 
