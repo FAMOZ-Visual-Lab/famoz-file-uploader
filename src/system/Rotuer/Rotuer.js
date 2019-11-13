@@ -19,6 +19,7 @@ class Rotuer extends Component {
     isLogin: false
   };
   endAction = "";
+  list = [];
   ipcRenderer;
 
   componentDidMount() {
@@ -31,7 +32,13 @@ class Rotuer extends Component {
 
     this.ipcRenderer.on("open_drivemoumt_popup", (e, arg) => {
       console.log("마운트가 안되어있어요");
-      this.endAction = arg;
+      this.endAction = arg[0];
+      if(arg[1] != undefined && arg[1] instanceof Array) {
+        this.list = arg[1];
+      }
+      else {
+        this.list = [];
+      }
       this.setState({ popupType: "project", innerPopup: "mount_drive" });
     });
 
@@ -63,6 +70,7 @@ class Rotuer extends Component {
             <PopupProjectSelect
               type={popupType}
               endAction={this.endAction}
+              mountList={this.list}
               innerPopup={this.state.innerPopup}
               setStateHandler={this.setStateHandler}
             />

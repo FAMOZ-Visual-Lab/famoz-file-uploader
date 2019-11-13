@@ -432,6 +432,7 @@ class PopupProjectSelect extends Component {
             선택해주세요.
           </Description>
           <PopupDriveMount
+            mountList={this.props.mountList}
             onChangeMountFolder={e => this.onChangeMountFolder(e)}
           />
         </React.Fragment>

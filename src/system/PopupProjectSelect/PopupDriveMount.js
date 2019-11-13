@@ -12,7 +12,14 @@ export default class PopupDriveMount extends Component {
   componentDidMount() {
     let result = [];
     const alphabet_ = alphabet.upper;
+    const mountList = this.props.mountList;
     for (let item of alphabet_) {
+
+      // 조건. mountList로 넘어온 친구 목록에 있는 드라이브 제외
+      if(Array.from(mountList).includes(item)) {
+        continue;
+      }
+
       result.push({
         id: item,
         label: `${item} 드라이브`
@@ -32,7 +39,7 @@ export default class PopupDriveMount extends Component {
     if (!datas) return;
     return datas.map((dt, i) => {
       return (
-        <MenuItem style={{ fontSize: "1.7rem" }} value={dt.id}>
+        <MenuItem key={i} style={{ fontSize: "1.7rem" }} value={dt.id}>
           {dt.label}
         </MenuItem>
       );
