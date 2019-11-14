@@ -7,6 +7,7 @@ import PopupWrapper from "./../ProgressPopup/PopupWrapper";
 import Main from "../../pages/main/index";
 import Login from "../../pages/login/index";
 import Header from "./../Header/Header";
+import UpdateProgress from "../../pages/update-progress";
 
 @inject(stores => ({
   setProgressList: stores.main.setProgressList
@@ -33,10 +34,9 @@ class Rotuer extends Component {
     this.ipcRenderer.on("open_drivemoumt_popup", (e, arg) => {
       console.log("마운트가 안되어있어요");
       this.endAction = arg[0];
-      if(arg[1] != undefined && arg[1] instanceof Array) {
+      if (arg[1] != undefined && arg[1] instanceof Array) {
         this.list = arg[1];
-      }
-      else {
+      } else {
         this.list = [];
       }
       this.setState({ popupType: "project", innerPopup: "mount_drive" });
@@ -87,8 +87,9 @@ class Rotuer extends Component {
     return (
       <HashRouter>
         <Switch>
+          <Route path="/update-progress" render={props => <UpdateProgress />} />
           <Route path="/progress" render={props => <PopupWrapper />} />
-          <Route path="/" render={props => this.renderDisplay(isLogin)} />
+          <Route path="/" render={props => <UpdateProgress />} />
         </Switch>
       </HashRouter>
     );

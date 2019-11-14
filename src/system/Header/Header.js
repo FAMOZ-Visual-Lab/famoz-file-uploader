@@ -135,10 +135,15 @@ class Header extends Component {
   };
 
   onClickLogo = () => {
+    const { disabled } = this.props;
+
+    if (disabled) return;
     this.ipcRenderer.send("open_progress");
   };
 
   render() {
+    const { disabled } = this.props;
+
     return (
       <Wrapper>
         <LogoWrapper
