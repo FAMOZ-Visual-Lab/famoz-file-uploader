@@ -89,7 +89,7 @@ class Rotuer extends Component {
         <Switch>
           <Route path="/update-progress" render={props => <UpdateProgress />} />
           <Route path="/progress" render={props => <PopupWrapper />} />
-          <Route path="/" render={props => <UpdateProgress />} />
+          <Route path="/" render={props => renderDisplay(isLogin)} />
         </Switch>
       </HashRouter>
     );
