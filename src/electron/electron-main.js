@@ -780,8 +780,8 @@ if (!isLock) {
             .catch(e => {});
 
           autoUpdater.on("download-progress", download => {
-            win.webContents.send("update_progress_percent", download.percent);
-            autoUpdater.logger.info("pers: " + download.percent);
+            // win.webContents.send("update_progress_percent", download.percent);
+            // autoUpdater.logger.info("pers: " + download.percent);
           });
         });
 
@@ -806,7 +806,7 @@ if (!isLock) {
 
               /** 이하에서 업데이트 목록 출력 */
 
-              fs.unlinkSync("./update.txt");
+              fs.unlinkSync(app.getPath("userData") + "./update.txt");
             }
           } catch (e) {
             log.error("e : " + e.message);
