@@ -724,14 +724,14 @@ if (!isLock) {
         autoUpdater.logger = log;
         autoUpdater.autoDownload = false;
 
-        autoUpdater.signals.progress(info => {
-          // info.total;
-          // info.delta;
-          // info.transferred;
-          // info.percent;
-          // info.bytesPerSecond;
-          log.info("download : " + info);
-        });
+        // autoUpdater.signals.progress(info => {
+        //   // info.total;
+        //   // info.delta;
+        //   // info.transferred;
+        //   // info.percent;
+        //   // info.bytesPerSecond;
+        //   log.info("download : " + info);
+        // });
 
         // info.releaseDate --> 업데이트 된 날짜(ex. 2019-11-01T08:25:09.540Z)
         // info.releaseName --> 업데이트 명칭
@@ -780,8 +780,7 @@ if (!isLock) {
             .catch(e => {});
 
           autoUpdater.on("download-progress", download => {
-            // win.webContents.send("update_progress_percent", download.percent);
-            // autoUpdater.logger.info("pers: " + download.percent);
+            win.webContents.send("update_progress_percent", download.percent);
           });
         });
 
@@ -795,9 +794,7 @@ if (!isLock) {
             const statSync = fs.statSync(
               app.getPath("userData") + "/update.txt"
             );
-            log.info("statSync: " + statSync);
-            log.info("statSync.isFile : " + statSync.isFile());
-            if (statSync) {
+            if (statSync && statSync.isFile()) {
               const read = JSON.parse(
                 fs.readFileSync(app.getPath("userData") + "/update.txt")
               );
@@ -805,8 +802,7 @@ if (!isLock) {
               log.info("releaseNotes : " + read.releaseNotes);
 
               /** 이하에서 업데이트 목록 출력 */
-
-              fs.unlinkSync(app.getPath("userData") + "./update.txt");
+              fs.unlinkSync(app.getPath("userData") + "/update.txt");
             }
           } catch (e) {
             log.error("e : " + e.message);
