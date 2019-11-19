@@ -22,6 +22,7 @@ const networkDrive = require("windows-network-drive");
 const moment = require("moment");
 const log = require("electron-log");
 const drivelist = require("drivelist");
+const fileHelper = require("./file");
 
 let win;
 
@@ -135,7 +136,15 @@ if (!isLock) {
             id = arg.id;
             pw = arg.pw;
             setDefaultDisplay();
+
+            // (19.11.19 추가) Init Mount
+            const isFile = fileHelper.isStat(app.getPath("userData") + "/mount.json");
+            if (isFile) {
+              const read = JSON.parse(fileHelper.readFile(app.getPath("userData") + "/mount.json"));
+              mountFolder(read.mount).then().catch(e => { log.error("Init Mount >> " + e.message)});
+            }
           }
+
           win.webContents.send("login_res", datas.success);
         } catch (e) {
           try {
@@ -678,14 +687,24 @@ if (!isLock) {
    * 네트워크 드라이브를 특정 논리 드라이브로 마운트 시킨다.
    */
   function mountFolder(send_drive) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
       try {
         drive = send_drive;
+
+        /** 이하에서 업데이트 목록 출력 */
+        const result = fileHelper.isStat(app.getPath("userData") + "/mount.json");
+        if (result) {
+          fileHelper.deleteFile(app.getPath("userData") + "/mount.json")
+        }
+        fileHelper.writeFile(app.getPath("userData") + "/mount.json", JSON.stringify({ mount: drive }));
+
+        await networkDrive.unmount(drive);
         await networkDrive.mount(`${SERVER_PATH}\\sv`, drive, id, pw);
         setDefaultDisplay();
         resolve();
+
       } catch (e) {
-        log.error("drive Mount Error : " + e);
+        log.error("drive Mount Error : " + e.message);
         reject(e);
       }
     });
@@ -760,8 +779,7 @@ if (!isLock) {
             .then(async () => {
               autoUpdater.on("update-downloaded", info => {
                 log.info("<update-downloaded>");
-                fs.writeFileSync(
-                  app.getPath("userData") + "/update.txt",
+                fileHelper.writeFile(app.getPath("userData") + "/update.txt",
                   JSON.stringify({
                     version: info.version,
                     releaseName: info.releaseName,
@@ -790,19 +808,14 @@ if (!isLock) {
         autoUpdater.on("update-not-available", () => {
           try {
             log.info("<update-not-available>\n");
-
-            const statSync = fs.statSync(
-              app.getPath("userData") + "/update.txt"
-            );
-            if (statSync && statSync.isFile()) {
-              const read = JSON.parse(
-                fs.readFileSync(app.getPath("userData") + "/update.txt")
-              );
+            const isFile = fileHelper.isStat(app.getPath("userData") + "/update.txt");
+            if (isFile) {
+              const read = JSON.parse(fileHelper.readFile(app.getPath("userData") + "/update.txt"));
               log.info("releaseName : " + read.releaseName);
               log.info("releaseNotes : " + read.releaseNotes);
 
               /** 이하에서 업데이트 목록 출력 */
-              fs.unlinkSync(app.getPath("userData") + "/update.txt");
+              fileHelper.deleteFile(app.getPath("userData") + "/update.txt");
             }
           } catch (e) {
             log.error("e : " + e.message);
