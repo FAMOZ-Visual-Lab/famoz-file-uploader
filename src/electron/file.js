@@ -11,7 +11,7 @@ file.makeDirEx = path => {
       try {
         if (error) {
           if (error.code === "EEXIST") {
-            resolve(`already folder`);
+            resolve("already folder");
           }
           // 해상 상위 폴더가 없을 경우
           else if (error.code === "ENOENT") {
@@ -73,44 +73,43 @@ file.write = (path, data) => {
   });
 };
 
-file.isStat = (path) => {
+file.isStat = path => {
   try {
-      const statSync = fs.statSync(path);
-      if (statSync && statSync.isFile()) {
-        return true;
-      }
-      return false;
-  }
-  catch(e) {
+    const statSync = fs.statSync(path);
+    if (statSync && statSync.isFile()) {
+      return true;
+    }
+    return false;
+  } catch (e) {
     log.error("isStat: " + e.message);
     return false;
   }
 };
 
-file.readFile = (path) => {
+file.readFile = path => {
   try {
     const buffer = fs.readFileSync(path);
     return buffer;
-  } catch(e) {
+  } catch (e) {
     log.error("readFile: " + e.message);
     return undefined;
   }
-}
+};
 
 file.writeFile = (path, data) => {
   try {
     fs.writeFileSync(path, data);
-  } catch(e) {
+  } catch (e) {
     log.error("writeFile: " + e.message);
   }
-}
+};
 
-file.deleteFile = (path) => {
+file.deleteFile = path => {
   try {
     fs.unlinkSync(path);
-  } catch(e) {
+  } catch (e) {
     log.error("deleteFile: " + e.message);
   }
-}
+};
 
 module.exports = file;

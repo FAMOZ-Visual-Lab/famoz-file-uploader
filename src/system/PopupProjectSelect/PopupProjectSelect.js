@@ -78,6 +78,13 @@ const Description = styled.p`
 
 const Buttons = styled.div``;
 
+const FrojectSearchInput = styled(Input)`
+  height: 4rem;
+  margin: 0 1rem;
+  margin-bottom: -1rem;
+  width: calc(100% - 2rem);
+`;
+
 class PopupProjectSelect extends Component {
   state = {
     project: [],
@@ -86,7 +93,8 @@ class PopupProjectSelect extends Component {
     innerPopup: false,
     newFolderName: "",
     warning: 0,
-    selectMountFolderName: ""
+    selectMountFolderName: "",
+    searchFrojectInput: ""
     // 0: 경고 없음
     // 1: 이미 있는 값
     // 2: 사용할 수 없는 값
@@ -106,11 +114,6 @@ class PopupProjectSelect extends Component {
     this.fs = window.require("fs");
 
     this.ipcRenderer.on("add_project_folder_res", (event, arg) => {
-      console.log(
-        "나 프로젝트 만들었으니까 칭찬해줘!",
-        this.state.newFolderName,
-        this.state.innerPopup
-      );
       this.ipcRenderer.send("popup_open", "project");
     });
 
@@ -122,7 +125,6 @@ class PopupProjectSelect extends Component {
     });
 
     this.ipcRenderer.on("re_popup_open", (e, arg) => {
-      console.log("제발 제대로 좀 나와줘", arg);
       let type;
       if (arg === "open_popup_date") {
         type = "date";
@@ -411,6 +413,9 @@ class PopupProjectSelect extends Component {
   };
 
   renderPopupContents = name => {
+    const { searchFrojectInput } = this.state;
+    const { type } = this.props;
+
     if (name === "add_folder") {
       return (
         <React.Fragment>
@@ -455,16 +460,24 @@ class PopupProjectSelect extends Component {
               }
             />
           </Path>
+          {type === "project" && (
+            <FrojectSearchInput
+              placeholder={"프로젝트를 검색해 주세요."}
+              value={searchFrojectInput}
+              onChange={e => this.setStateHandler("searchFrojectInput", e)}
+            />
+          )}
+
           <ScrollWrapper
             minus={
               this.props.type === "project" &&
               this.isAbleNewProjectFolder(this.state.selectProject)
-                ? "20"
-                : "14"
+                ? "23"
+                : "17"
             }
           >
             <ProjectList
-              project={this.state.project}
+              project={this.setProjectList()}
               selectProject={this.state.selectProject}
               handleListDoubleClick={this.handleListDoubleClick}
               setStateHandler={this.setStateHandler}
@@ -473,6 +486,16 @@ class PopupProjectSelect extends Component {
         </React.Fragment>
       );
     }
+  };
+
+  setProjectList = () => {
+    const { project, searchFrojectInput } = this.state;
+
+    if (!searchFrojectInput) return project;
+    else
+      return project.filter(
+        data => data.isdir && data.name.match(searchFrojectInput)
+      );
   };
 
   isAbleNewProjectFolder = selectProject => {
