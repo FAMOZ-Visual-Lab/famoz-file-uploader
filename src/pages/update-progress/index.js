@@ -6,8 +6,9 @@ import Header from "../../system/Header/Header";
 
 const ipcRenderer = window.require("electron").ipcRenderer;
 
-const Container = styled.div`
-  width: 100%;
+const ExLoadingStauts = styled(LoadingStauts)`
+  border: none;
+  height: 100%;
 `;
 
 class UpdateProgress extends Component {
@@ -17,7 +18,6 @@ class UpdateProgress extends Component {
 
   componentDidMount() {
     ipcRenderer.on("update_progress_percent", (e, args) => {
-      console.log("업데이트 프로그레스 : ", args);
       this.setState({ progress: args });
     });
   }
@@ -26,10 +26,10 @@ class UpdateProgress extends Component {
     const { progress } = this.state;
 
     return (
-      <Container>
-        <Header disabled />
-        <LoadingStauts percent={progress} id={"업데이트 진행률"} />
-      </Container>
+      <ExLoadingStauts
+        percent={progress}
+        id={"파모즈 파일 관리자 업데이트 진행률"}
+      />
     );
   }
 }

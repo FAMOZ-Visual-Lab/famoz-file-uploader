@@ -12,8 +12,11 @@ const Wrapper = styled.div`
 `;
 
 const Progress = styled.div`
+  position: relative;
   width: ${props => props.width || 0}%;
   height: 100%;
+  display: flex;
+  align-items: center;
   background: linear-gradient(
     to right,
     skyblue,
@@ -22,9 +25,17 @@ const Progress = styled.div`
   transition: all 0.4s;
 `;
 
+const PercentText = styled.p`
+  position: absolute;
+  left: 1rem;
+  font-weight: bold;
+`;
+
 const LoadingBar = ({ percent, className }) => (
   <Wrapper className={className}>
-    <Progress width={percent}></Progress>
+    <Progress width={percent}>
+      <PercentText>{percent}%</PercentText>
+    </Progress>
   </Wrapper>
 );
 

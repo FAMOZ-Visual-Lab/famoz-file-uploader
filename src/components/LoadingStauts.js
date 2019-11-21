@@ -31,10 +31,12 @@ const LoadingBarWrapper = styled(LoadingBar)`
 
 export default class LoadingStauts extends Component {
   render() {
+    const { className, percent, id } = this.props;
+
     return (
-      <Wrapper>
-        <Title>{this.props.id}</Title>
-        <LoadingBarWrapper percent={this.props.percent} />
+      <Wrapper className={className}>
+        <Title>{id}</Title>
+        <LoadingBarWrapper percent={percent} />
       </Wrapper>
     );
   }

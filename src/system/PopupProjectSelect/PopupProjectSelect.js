@@ -379,7 +379,7 @@ class PopupProjectSelect extends Component {
 
   onClickAddFolderButton = () => {
     this.setState({ innerPopup: "add_folder", newFolderName: "" }, () => {
-      this.ipcRenderer.send("set_cumstom_height");
+      this.ipcRenderer.send("set_custom_height");
     });
   };
 

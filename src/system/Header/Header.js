@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import styled, { css } from "styled-components";
-import Icon_ from "@material-ui/core/Icon";
-import LogoImg from "../../assets/image/logo.png";
 import { inject } from "mobx-react";
 import { toJS } from "mobx";
+import { Icon as Icon_ } from "@material-ui/core";
+
+import SpinLogo from "./../../components/SpinLogo";
 
 const FlexOption = `
     display: flex;
@@ -19,57 +20,6 @@ const Wrapper = styled.div`
   padding: 1rem 2rem;
   ${FlexOption};
   -webkit-app-region: drag;
-`;
-
-const LogoWrapper = styled.div`
-  width: 15%;
-  height: 100%;
-  ${FlexOption};
-  transition: all ease 1s;
-  position: relative;
-  cursor: pointer;
-  -webkit-app-region: no-drag;
-  ${props =>
-    props.isTransform
-      ? css`
-          opacity: 0.7;
-          animation-name: spin;
-          animation-duration: 3000ms;
-          animation-iteration-count: infinite;
-          animation-timing-function: linear;
-
-          &:hover {
-            opacity: 1;
-          }
-        `
-      : ""}
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  ::before {
-    content: "";
-    display: block;
-    position: absolute;
-    z-index: 1;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 100%;
-    background-color: white;
-  }
-`;
-
-const Logo = styled.img`
-  width: 4rem;
-  height: 4rem;
-  position: absolute;
-  z-index: 5;
-  opacity: 1;
 `;
 
 const TitleWrapper = styled.div`
@@ -102,6 +52,7 @@ const Icon = styled(Icon_)`
   color: white;
   font-size: 4.6rem !important;
   font-weight: thin;
+
   transition: all 0.2s;
   &:hover {
     cursor: pointer;
@@ -112,6 +63,10 @@ const Icon = styled(Icon_)`
 const FlexWrapper = styled.div`
   width: 100%;
   height: auto;
+`;
+
+const ExSpinLogo = styled(SpinLogo)`
+  width: 15%;
 `;
 
 @inject(stores => ({
@@ -146,12 +101,10 @@ class Header extends Component {
 
     return (
       <Wrapper>
-        <LogoWrapper
-          onClick={this.onClickLogo}
-          isTransform={this.isTransform(this.props.progressList)}
-        >
-          <Logo src={LogoImg} alt="파모즈 로고" />
-        </LogoWrapper>
+        <ExSpinLogo
+          onClick={!disabled && this.onClickLogo}
+          isSpin={this.isTransform(this.props.progressList)}
+        />
         <TitleWrapper>
           <FlexWrapper>
             <Title>파모즈 파일 관리자</Title>

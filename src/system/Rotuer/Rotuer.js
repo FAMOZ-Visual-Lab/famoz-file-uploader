@@ -8,6 +8,7 @@ import Main from "../../pages/main/index";
 import Login from "../../pages/login/index";
 import Header from "./../Header/Header";
 import UpdateProgress from "../../pages/update-progress";
+import UpdateAlert from "../../pages/update-alert";
 
 @inject(stores => ({
   setProgressList: stores.main.setProgressList
@@ -39,7 +40,9 @@ class Rotuer extends Component {
       } else {
         this.list = [];
       }
-      this.setState({ popupType: "project", innerPopup: "mount_drive" });
+      this.setState({ popupType: "project", innerPopup: "mount_drive" }, () => {
+        this.ipcRenderer.send("set_custom_height");
+      });
     });
 
     this.ipcRenderer.on("change_progress", (e, arg) => {
@@ -87,6 +90,7 @@ class Rotuer extends Component {
     return (
       <HashRouter>
         <Switch>
+          <Route path="/update-alert" render={props => <UpdateAlert />} />
           <Route path="/update-progress" render={props => <UpdateProgress />} />
           <Route path="/progress" render={props => <PopupWrapper />} />
           <Route path="/" render={props => this.renderDisplay(isLogin)} />

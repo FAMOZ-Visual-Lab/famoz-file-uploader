@@ -62,8 +62,9 @@ if (!isLock) {
   let progressMap = new Map();
   let childOpen = false;
   let addProjectFolrder = "";
+  let updateData = null;
 
-  const config = {
+  let config = {
     resizable: false,
     frame: false,
     transparent: true,
@@ -78,12 +79,14 @@ if (!isLock) {
 
   function createWindow(isUpdate) {
     if (isUpdate) {
+      config = {
+        ...config,
+        height: 100
+      };
+
       win = new BrowserWindow({
         ...config,
-        center: true,
-        alwaysOnTop: true,
-        useContentSize: true,
-        height: 300
+        center: true
       });
 
       const startUrl = isDev
@@ -100,20 +103,24 @@ if (!isLock) {
 
       win.loadURL(startUrl);
     } else {
+      extendConfig = {};
+
+      if (updateData) {
+        config = {
+          ...config,
+          height: 500
+        };
+      }
+
       win = new BrowserWindow({
         center: true,
         alwaysOnTop: true,
         useContentSize: true,
         ...config
       });
-      const startUrl = isDev
-        ? "http://localhost:3000"
-        : process.env.ELECTRON_START_URL ||
-          url.format({
-            pathname: path.join(__dirname, "../../build/index.html"),
-            protocol: "file:",
-            slashes: true
-          });
+      console.log("updateData:", updateData);
+      let startUrl = setStartUrl(updateData && "update-alert");
+      console.log("startUrl:", startUrl);
 
       win.setIcon(trayIcon, "파모즈 파일 관리자 앱");
 
@@ -129,6 +136,13 @@ if (!isLock) {
         win.hide();
       });
 
+      ipcMain.on("update_alert_show", () => {
+        try {
+          win.webContents.send("update_alert_data", updateData);
+          updateData = null;
+        } catch (e) {}
+      });
+
       ipcMain.on("login", async (event, arg) => {
         try {
           const datas = await NET.login(arg);
@@ -138,10 +152,18 @@ if (!isLock) {
             setDefaultDisplay();
 
             // (19.11.19 추가) Init Mount
-            const isFile = fileHelper.isStat(app.getPath("userData") + "/mount.json");
+            const isFile = fileHelper.isStat(
+              app.getPath("userData") + "/mount.json"
+            );
             if (isFile) {
-              const read = JSON.parse(fileHelper.readFile(app.getPath("userData") + "/mount.json"));
-              mountFolder(read.mount).then().catch(e => { log.error("Init Mount >> " + e.message)});
+              const read = JSON.parse(
+                fileHelper.readFile(app.getPath("userData") + "/mount.json")
+              );
+              mountFolder(read.mount)
+                .then()
+                .catch(e => {
+                  log.error("Init Mount >> " + e.message);
+                });
             }
           }
 
@@ -318,16 +340,26 @@ if (!isLock) {
         closeProgressPopup();
       });
 
-      ipcMain.on("set_cumstom_height", e => {
-        setCustomDisplay();
+      ipcMain.on("set_custom_height", (e, arg) => {
+        setCustomDisplay(arg);
       });
 
       ipcMain.on("set_popup_display", () => {
         setPopupDisplay();
       });
     }
+  }
 
-    // if (isDev) win.webContents.openDevTools();
+  function setStartUrl(hash) {
+    return isDev
+      ? `http://localhost:3000${hash ? `#/${hash}` : ""}`
+      : process.env.ELECTRON_START_URL ||
+          url.format({
+            pathname: path.join(__dirname, "../../build/index.html"),
+            protocol: "file:",
+            slashes: true,
+            hash: hash && hash
+          });
   }
 
   async function getProejctFolderData(arg) {
@@ -606,10 +638,19 @@ if (!isLock) {
     }
   }
 
-  function setCustomDisplay() {
+  function setCustomDisplay(arg) {
+    let mainWidth;
+    let mainHeight;
+
+    if (!arg) {
+      mainWidth = 600;
+      mainHeight = 290;
+    } else {
+      mainWidth = 600;
+      mainHeight = arg;
+    }
+
     const { width, height } = electron.screen.getPrimaryDisplay().size;
-    const mainWidth = 600;
-    const mainHeight = 290;
     const x = width / 2 - mainWidth / 2;
     const y = height / 2 - mainHeight / 2;
 
@@ -687,22 +728,26 @@ if (!isLock) {
    * 네트워크 드라이브를 특정 논리 드라이브로 마운트 시킨다.
    */
   function mountFolder(send_drive) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         drive = send_drive;
 
         /** 이하에서 업데이트 목록 출력 */
-        const result = fileHelper.isStat(app.getPath("userData") + "/mount.json");
+        const result = fileHelper.isStat(
+          app.getPath("userData") + "/mount.json"
+        );
         if (result) {
-          fileHelper.deleteFile(app.getPath("userData") + "/mount.json")
+          fileHelper.deleteFile(app.getPath("userData") + "/mount.json");
         }
-        fileHelper.writeFile(app.getPath("userData") + "/mount.json", JSON.stringify({ mount: drive }));
+        fileHelper.writeFile(
+          app.getPath("userData") + "/mount.json",
+          JSON.stringify({ mount: drive })
+        );
 
         await networkDrive.unmount(drive);
         await networkDrive.mount(`${SERVER_PATH}\\sv`, drive, id, pw);
         setDefaultDisplay();
         resolve();
-
       } catch (e) {
         log.error("drive Mount Error : " + e.message);
         reject(e);
@@ -779,7 +824,8 @@ if (!isLock) {
             .then(async () => {
               autoUpdater.on("update-downloaded", info => {
                 log.info("<update-downloaded>");
-                fileHelper.writeFile(app.getPath("userData") + "/update.txt",
+                fileHelper.writeFile(
+                  app.getPath("userData") + "/update.txt",
                   JSON.stringify({
                     version: info.version,
                     releaseName: info.releaseName,
@@ -798,7 +844,10 @@ if (!isLock) {
             .catch(e => {});
 
           autoUpdater.on("download-progress", download => {
-            win.webContents.send("update_progress_percent", download.percent);
+            win.webContents.send(
+              "update_progress_percent",
+              Number(download.percent).toFixed(2)
+            );
           });
         });
 
@@ -808,9 +857,15 @@ if (!isLock) {
         autoUpdater.on("update-not-available", () => {
           try {
             log.info("<update-not-available>\n");
-            const isFile = fileHelper.isStat(app.getPath("userData") + "/update.txt");
+            const isFile = fileHelper.isStat(
+              app.getPath("userData") + "/update.txt"
+            );
             if (isFile) {
-              const read = JSON.parse(fileHelper.readFile(app.getPath("userData") + "/update.txt"));
+              const read = JSON.parse(
+                fileHelper.readFile(app.getPath("userData") + "/update.txt")
+              );
+
+              updateData = read;
               log.info("releaseName : " + read.releaseName);
               log.info("releaseNotes : " + read.releaseNotes);
 
