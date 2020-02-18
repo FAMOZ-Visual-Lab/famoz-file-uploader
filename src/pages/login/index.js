@@ -27,7 +27,7 @@ const LoginWait = styled.div`
 export default class Login extends Component {
   state = {
     id: "admin",
-    pw: "famoz1234",
+    pw: "famoz1234!@",
     islogin: true
   };
 
@@ -35,8 +35,6 @@ export default class Login extends Component {
 
   componentDidMount() {
     this.ipcRenderer = window.require("electron").ipcRenderer;
-
-    console.log("나 그려지긴 했어??");
     this.login();
 
     this.ipcRenderer.on("login_res", (event, res) => {
@@ -54,7 +52,6 @@ export default class Login extends Component {
       pw: this.state.pw
     };
     this.ipcRenderer.send("login", query);
-    console.log("나 보냈어!!");
   };
 
   render() {

@@ -13,7 +13,7 @@ web._request = (method = "GET", url, params, data, headers) => {
       params,
       data,
       baseURL: API_ROOT,
-      timeout: 10000
+      timeout: 30000
     })
     .then(res => Promise.resolve(res.data))
     .catch(error => Promise.reject(error.response));

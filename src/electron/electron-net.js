@@ -48,7 +48,6 @@ NET.addProjectFolder = async name => {
   const path = "Project";
   const data = await NET.createFolder(path, name);
 
-  console.log(path, name);
   if (!data) return data;
   const arr = ["Pre-Production", "Production", "Post-Production"];
   for (let i = 0; i < arr.length; i++) {
