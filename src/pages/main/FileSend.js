@@ -20,6 +20,7 @@ class FileSend extends Component {
           key={i}
           id={dt.id}
           subtitle={dt.subtitle}
+          subtitle2={dt.subtitle2}
           value={this.state.file}
           onClick={e => this.onClickFile(e)}
           onChange={e => this.onChangeFile(e)}
@@ -58,7 +59,7 @@ class FileSend extends Component {
   render() {
     const files = [
       { subtitle: "빠른 업로드 (프로젝트)", id: "project" },
-      { subtitle: "빠른 업로드 (오늘 날짜)", id: "date" }
+      { subtitle: "빠른 업로드 (오늘 날짜)", subtitle2: "※ 날짜 폴더에 올린 파일은 2달 뒤에 삭제됩니다.", id: "date" }
     ];
     return <Fragment>{this.renderFileUploads(files)}</Fragment>;
   }

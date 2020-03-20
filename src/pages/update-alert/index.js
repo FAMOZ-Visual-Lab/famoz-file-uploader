@@ -86,18 +86,27 @@ const FlexContainer = styled.div`
 
 class UpdateAlert extends Component {
   state = {
-    updateInfo: null
+    updateInfo: null,
+    isSimple: false
   };
   componentDidMount() {
     ipcRenderer.on("update_alert_data", (e, release) => {
-      this.setState({ updateInfo: release });
+      this.setState({ updateInfo: release, isSimple: false });
     });
 
+    ipcRenderer.on("update_alert_data_2", (e, release) => {
+      this.setState({ updateInfo: release, isSimple: true });
+    });
     ipcRenderer.send("update_alert_show");
   }
 
   handleClickApplyButton = () => {
-    ipcRenderer.send("set_custom_height", 100);
+    if(this.state.isSimple) {
+      ipcRenderer.send("close_modal");
+    }
+    else {
+      ipcRenderer.send("set_custom_height", 100);
+    }
   };
 
   render() {

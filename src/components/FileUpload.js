@@ -54,6 +54,11 @@ const SubTitle = styled.p`
   margin-top: 1rem;
 `;
 
+const SubTitle2 = styled.p`
+  font-size: 1.3rem;
+  margin-top: 1rem;
+`;
+
 const OpenDir = styled.div`
   width: 4rem;
   height: 4rem;
@@ -125,6 +130,15 @@ export default class FileUpload extends Component {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
+  subtitle2Render = () => {
+    if(this.props.subtitle2) {
+      return <SubTitle2>{this.props.subtitle2}</SubTitle2>;
+    }
+    else {
+      return <div />;
+    }
+  }
+
   render() {
     const { value, subtitle } = this.props;
     const { onChange, onDragOver, setStateHandler } = this;
@@ -144,6 +158,7 @@ export default class FileUpload extends Component {
           <FlexWrapper>
             <SubTitle>{subtitle}</SubTitle>
             <Title>Drag & Drop</Title>
+            { this.subtitle2Render() }
           </FlexWrapper>
         </ViewInput>
         <OpenDir onClick={this.onClickFolderOpen}>

@@ -61,7 +61,6 @@ class Footer extends Component {
 
   componentDidMount() {
     this.ipcRenderer = window.require("electron").ipcRenderer;
-    console.log(this.ipcRenderer);
   }
 
   onClickMenu = name => {
@@ -72,6 +71,12 @@ class Footer extends Component {
 
     if (name === "search") {
       this.props.setIsDefault(false);
+      return;
+    }
+    
+    if (name === "more") {
+      this.ipcRenderer.send("update_alert_show_dialog_open");
+      return;
     }
   };
 
@@ -92,7 +97,7 @@ class Footer extends Component {
     const menu = [
       { icon: "folder_open", id: "folder", label: "폴더 열기" },
       { icon: "search", id: "search", label: "탐색" },
-      { icon: "more_horiz", id: "more", label: "더보기" }
+      { icon: "more_horiz", id: "more", label: "공지사항" }
     ];
     return <Wrapper>{this.renderMenu(menu)}</Wrapper>;
   }
