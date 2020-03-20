@@ -1,12 +1,11 @@
 // import axios from "axios";
 const axios = require("axios");
-const API_ROOT = "http://61.73.79.136:5000/webapi/";
+const API_ROOT = "http://famoz.synology.me:5000/webapi/";
 
 let web = {};
 
 web._request = (method = "GET", url, params, data, headers) => {
-  return axios
-    .request({
+  return axios.request({
       method,
       headers,
       url,
@@ -14,9 +13,15 @@ web._request = (method = "GET", url, params, data, headers) => {
       data,
       baseURL: API_ROOT,
       timeout: 30000
-    })
-    .then(res => Promise.resolve(res.data))
-    .catch(error => Promise.reject(error.response));
+    }).then((res) => {
+      console.log(`d: `, res.data); 
+      // Promise.resolve(res);
+      return res.data;
+    }).catch(error => {
+     console.log(error); 
+    //  Promise.reject(error.response);
+     throw error.response;
+    });
 };
 
 web.post = (url, value, headers = {}) => {

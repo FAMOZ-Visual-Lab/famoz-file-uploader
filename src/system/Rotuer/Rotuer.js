@@ -18,8 +18,9 @@ class Rotuer extends Component {
     popupType: "",
     innerPopup: "",
     innerTrans: "",
-    isLogin: false
+    isLogin: false,
   };
+  SERVER_PATH = "";
   endAction = "";
   list = [];
   ipcRenderer;
@@ -46,7 +47,6 @@ class Rotuer extends Component {
     });
 
     this.ipcRenderer.on("change_progress", (e, arg) => {
-      console.log("argument: ", arg);
       this.props.setProgressList(arg);
     });
   }
@@ -54,6 +54,9 @@ class Rotuer extends Component {
   setStateHandler = (name, value) => {
     this.setState({ [name]: value });
   };
+  setServerPathHandler = (path) => {
+    this.SERVER_PATH = path;
+  }
 
   renderDisplay = login => {
     const { popupType, progressList } = this.state;
@@ -76,12 +79,13 @@ class Rotuer extends Component {
               mountList={this.list}
               innerPopup={this.state.innerPopup}
               setStateHandler={this.setStateHandler}
+              SERVER_PATH={this.SERVER_PATH}
             />
           </React.Fragment>
         );
       }
     } else {
-      return <Login setStateHandler={this.setStateHandler} />;
+      return <Login setStateHandler={this.setStateHandler} setServerPathHandler={this.setServerPathHandler} />;
     }
   };
 

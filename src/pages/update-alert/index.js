@@ -105,7 +105,7 @@ class UpdateAlert extends Component {
       ipcRenderer.send("close_modal");
     }
     else {
-      ipcRenderer.send("set_custom_height", 100);
+      ipcRenderer.send("set_custom_login");
     }
   };
 

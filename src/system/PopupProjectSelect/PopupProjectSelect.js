@@ -3,8 +3,6 @@ import _ from "lodash";
 import styled from "styled-components";
 import Icon_ from "@material-ui/core/Icon";
 
-import { SERVER_PATH } from "../../configs/config";
-
 import FolderLocation from "./FolderLocation";
 import ProjectList from "./ProjectList";
 import PopupButton from "./PopupButton";
@@ -297,7 +295,7 @@ class PopupProjectSelect extends Component {
       .map(item => {
         let result = [];
         const path = String(item.path).replace(/\//gi, "\\");
-        const pathname = `${SERVER_PATH}${path}`;
+        const pathname = `${this.props.SERVER_PATH}${path}`;
         let filelist;
         try {
           filelist = this.fs.readdirSync(pathname);

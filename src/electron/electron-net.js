@@ -1,30 +1,38 @@
 ﻿const request = require("../utils/utils");
 const urlencode = require("urlencode");
 
-let NET = {},
-  SID = "";
+let NET = {}, SID = "";
 const FOLDER_PATH = "/sv";
 
-NET.login = async query => {
-  const datas = await request.get(
-    `auth.cgi?api=SYNO.API.Auth&version=3&method=login&account=${query.id}&passwd=${query.pw}&format=sid`
-  );
-
-  if (datas.success === true) {
-    SID = datas.data.sid;
+NET.login = async (query) => {
+  try {
+    const id = urlencode(query.id);
+    const pw = urlencode(query.pw);
+    const datas = await request.get(`auth.cgi?api=SYNO.API.Auth&version=3&method=login&account=${id}&passwd=${pw}&session=FileStation&format=sid`);
+    if (datas.success === true) {
+      SID = datas.data.sid;
+    }
+    return datas;
   }
+  catch(e) {
+    throw e;
+  }
+};
 
-  return datas;
+
+NET.logout = async () => {
+  try {
+    const _sid = urlencode(SID);
+    await request.get(`auth.cgi?api=SYNO.API.Auth&version=1&method=logout&session=${_sid}`);
+  }
+  catch(e) {
+    throw e;
+  }
 };
 
 NET.getProjectData = async path => {
   let urlpath_ = urlencode(path);
-  let path_ = `entry.cgi?api=SYNO.FileStation.List&version=2&method=list&folder_path=${String(
-    urlpath_
-  )}&_sid=${SID}`;
-
-  console.log("path_", path_);
-
+  let path_ = `entry.cgi?api=SYNO.FileStation.List&version=2&method=list&folder_path=${String(urlpath_)}&_sid=${SID}`;
   const datas = await request.get(path_);
   return datas;
 };

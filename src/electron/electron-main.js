@@ -1,5 +1,6 @@
 ﻿const {
   app,
+  shell,
   BrowserWindow,
   ipcMain,
   Menu,
@@ -18,11 +19,15 @@ const url = require("url");
 const event = require("events");
 const path = require("path");
 const isDev = require("electron-is-dev");
-const networkDrive = require("windows-network-drive");
 const moment = require("moment");
 const log = require("electron-log");
 const drivelist = require("drivelist");
 const fileHelper = require("./file");
+
+const networkDriveUtil = require("./windows-mount");
+const server_config = require("../configs/config");
+let SERVER_PATH = "";
+let isTel;
 
 let win;
 
@@ -44,9 +49,6 @@ if (!isLock) {
   app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
   app.commandLine.appendSwitch("enable-transparent-visuals", "disable-gpu");
 
-  // const { SERVER_PATH } = require("../configs/config");
-
-  const SERVER_PATH = "\\\\FAMOZ_NAS";
 
   const iconPath = path.join(__dirname, "../../resources/logo.png");
   let trayIcon = nativeImage.createFromPath(iconPath);
@@ -70,8 +72,8 @@ if (!isLock) {
     transparent: true,
     movable: true,
     acceptFirstMouse: true,
-    width: 600,
-    height: 100,
+    width: 350,
+    height: 500,
     webPreferences: {
       nodeIntegration: true
     }
@@ -81,7 +83,8 @@ if (!isLock) {
     if (isUpdate) {
       config = {
         ...config,
-        height: 100
+        width: 600,
+        height: 500
       };
 
       win = new BrowserWindow({
@@ -108,6 +111,14 @@ if (!isLock) {
       if (updateData) {
         config = {
           ...config,
+          width: 600,
+          height: 500
+        };
+      }
+      else {
+        config = {
+          ...config,
+          width: 350,
           height: 500
         };
       }
@@ -121,9 +132,7 @@ if (!isLock) {
       console.log("updateData:", updateData);
       let startUrl = setStartUrl(updateData && "update-alert");
       console.log("startUrl:", startUrl);
-
       win.setIcon(trayIcon, "파모즈 파일 관리자 앱");
-
       win.loadURL(startUrl);
 
       win.on("close", event => {
@@ -143,15 +152,33 @@ if (!isLock) {
         } catch (e) {}
       });
 
+      // 업데이트 목록을 다시 보여준다.
+      ipcMain.on("update_alert_show_dialog_open", () => {
+        try {
+          const read = JSON.parse(
+            fileHelper.readFile(app.getPath("userData") + "/updateInfo.txt")
+          );
+          openUpdateInfoPopup(read);
+        } catch (e) {}
+      });
+
       ipcMain.on("login", async (event, arg) => {
+        let step = 0;
         try {
           const datas = await NET.login(arg);
           if (datas.success) {
+            step++;
+
             id = arg.id;
             pw = arg.pw;
-            setDefaultDisplay();
-
-            // (19.11.19 추가) Init Mount
+            isTel = arg.isTel;
+            if(arg.isTel == true) {
+              SERVER_PATH = server_config.SERVER_PATH_SUB;
+            }
+            else {
+              SERVER_PATH = server_config.SERVER_PATH_MAIN;
+            }
+            console.log("SERVER_PATH : ", SERVER_PATH);
             const isFile = fileHelper.isStat(
               app.getPath("userData") + "/mount.json"
             );
@@ -159,30 +186,24 @@ if (!isLock) {
               const read = JSON.parse(
                 fileHelper.readFile(app.getPath("userData") + "/mount.json")
               );
-              mountFolder(read.mount)
-                .then()
-                .catch(e => {
-                  log.error("Init Mount >> " + e.message);
-                });
+              step++;
+              await mountFolder(read.mount);
             }
-          }
-
-          win.webContents.send("login_res", datas.success);
-        } catch (e) {
-          try {
-            const datas = await NET.login(arg);
-            if (datas.success) {
-              id = arg.id;
-              pw = arg.pw;
-              setDefaultDisplay();
-            }
-            win.webContents.send("login_res", datas.success);
-          } catch (e) {
-            log.error(e.message);
+            console.log("SERVER_PATH : ", SERVER_PATH);
+            win.webContents.send("login_res", { success: true, type: 0 });
             setDefaultDisplay();
-            win.webContents.send("login_res", false);
           }
-
+          else {
+            win.webContents.send("login_res", { success: false, type: 0 });
+          }
+        } catch (e) {
+          log.error("e :", e);
+          if(step == 2) {
+            win.webContents.send("login_res", { success: false, type: 1 });
+          }
+          else {
+            win.webContents.send("login_res", { success: false, type: 2 });
+          }
           return e;
         }
       });
@@ -340,9 +361,19 @@ if (!isLock) {
         closeProgressPopup();
       });
 
+      ipcMain.on("close_modal", () => {
+        closeModal();
+      });
+
       ipcMain.on("set_custom_height", (e, arg) => {
         setCustomDisplay(arg);
       });
+
+      ipcMain.on("set_custom_login", () => {
+        setCustomLoginDisplay();
+      });
+
+
 
       ipcMain.on("set_popup_display", () => {
         setPopupDisplay();
@@ -399,6 +430,39 @@ if (!isLock) {
     });
   }
 
+  function openUpdateInfoPopup(data) {
+    let child_config = {
+      ...config,
+      width: 600,
+      height: 500
+    };
+    
+    child = new BrowserWindow({
+      parent: win,
+      modal: true,
+      show: false,
+      ...child_config
+    });
+    const startUrl = isDev
+      ? "http://localhost:3000#/update-alert"
+      : process.env.ELECTRON_START_URL ||
+        url.format({
+          pathname: path.join(__dirname, "../../build/index.html"),
+          protocol: "file:",
+          slashes: true,
+          hash: "update-alert"
+        });
+    child.loadURL(startUrl);
+
+    child.once("ready-to-show", async () => {
+      childOpen = true;
+      child.show();
+      if (childOpen) {
+        child.webContents.send("update_alert_data_2", data);
+      }
+    });
+  }
+
   async function resolveMapToArray() {
     let pList = [];
     for (const key of progressMap.keys()) {
@@ -414,6 +478,12 @@ if (!isLock) {
     childOpen = false;
     child.hide();
   }
+
+  function closeModal() {
+    childOpen = false;
+    child.hide();
+  }
+
 
   async function login() {
     try {
@@ -462,7 +532,7 @@ if (!isLock) {
                   sub_path.lastIndexOf("\\" || "/")
                 );
                 await makeDirEx(res_path);
-                await makeDirEx(sub_path);
+                await makeDirEx(sub_path);3
               } else {
                 throw new Error("(SERVER) Nothing Path");
               }
@@ -663,6 +733,26 @@ if (!isLock) {
     win.center();
   }
 
+  function setCustomLoginDisplay() {
+    let mainWidth;
+    let mainHeight;
+
+    mainWidth = 350;
+    mainHeight = 500;
+
+    const { width, height } = electron.screen.getPrimaryDisplay().size;
+    const x = width / 2 - mainWidth / 2;
+    const y = height / 2 - mainHeight / 2;
+
+    win.setBounds({
+      x,
+      y,
+      width: mainWidth,
+      height: mainHeight
+    });
+    win.center();
+  }
+
   function setDefaultDisplay() {
     const { width, height } = electron.screen.getPrimaryDisplay().size;
     win.setAlwaysOnTop(true);
@@ -687,15 +777,23 @@ if (!isLock) {
           physics_drive.push(path.substring(0, path.indexOf(":")));
         }
       }
-      log.info("physics_drive : ", physics_drive);
-
-      const data = await networkDrive.find(`${SERVER_PATH}\\sv`);
+      
+      let data = [];
+      if(isTel) {
+        console.log(" >> 1");
+        data = await networkDriveUtil.find(`famoz.synology.me@5005`, true);
+      }
+      else {
+        console.log(" >> 2");
+        data = await networkDriveUtil.find(`FAMOZ_NAS`, true);
+      }
+      console.log("data : ", data);
       for (let i = 0; i < data.length; i++) {
         physics_drive.push(data[i]);
       }
       log.info("physics_drive + net mount : ", physics_drive);
 
-      if (data) {
+      if (data.length > 0) {
         drive = data[0];
         log.info("drive : ", data);
 
@@ -703,7 +801,8 @@ if (!isLock) {
           return MountState.S_NORMAL_MOUNT;
         }
         return MountState.S_DRIVE_MOUNT;
-      } else {
+      } 
+      else {
         drive = "";
         win.webContents.send("open_drivemoumt_popup", [
           endAction || "",
@@ -731,6 +830,7 @@ if (!isLock) {
     return new Promise(async (resolve, reject) => {
       try {
         drive = send_drive;
+        console.log("send_drive : ", send_drive);
 
         /** 이하에서 업데이트 목록 출력 */
         const result = fileHelper.isStat(
@@ -744,8 +844,18 @@ if (!isLock) {
           JSON.stringify({ mount: drive })
         );
 
-        await networkDrive.unmount(drive);
-        await networkDrive.mount(`${SERVER_PATH}\\sv`, drive, id, pw);
+        console.log("Unmount : ", drive);
+        await networkDriveUtil.unmount(drive);
+        console.log("Mount ${SERVER_PATH} : ", `${SERVER_PATH}`);
+        let mountPath = SERVER_PATH;
+        if(isTel) {
+          console.log("재택근무");
+          mountPath += "/sv";
+        }
+        else {
+          mountPath += "\\sv";
+        }
+        await networkDriveUtil.mount(mountPath, drive, id, pw);
         setDefaultDisplay();
         resolve();
       } catch (e) {
@@ -757,22 +867,27 @@ if (!isLock) {
 
   async function openFileExplore(path_) {
     try {
+      console.log("drive 1 : ", drive);
+      console.log("path_ : ", path_);
       const result = await ismountAble("open_explore");
       log.info("mountable : ", result);
 
       if (result == MountState.S_DRIVE_MOUNT) {
         if (path_ != "") {
           log.info(`already path : ${drive}:\\${path_}`);
-          require("child_process").exec(`start "" "${drive}:\\${path_}"`);
-        } else {
+          shell.openItem(`${drive}:\\${path_}`);
+        } 
+        else {
           log.info("default path : ", drive);
-          require("child_process").exec(`start ${drive}:\\`);
+          shell.openItem(`${drive}:\\`);
         }
       }
       // 이 상태는 마운트는 되었는데 가상 네트워크 드라이브로 할당된 것이 아닌 다른 방식으로 할당 됨
       else if (result == MountState.S_NORMAL_MOUNT) {
-        require("child_process").exec(`start ${SERVER_PATH}\\sv\\`);
-      } else {
+        console.log(`drive 2 : ${drive}:\\`);
+        shell.openItem(`${drive}:\\`);
+      } 
+      else {
         setPopupDisplay();
       }
     } catch (e) {
@@ -865,6 +980,17 @@ if (!isLock) {
                 fileHelper.readFile(app.getPath("userData") + "/update.txt")
               );
 
+              fileHelper.deleteFile(app.getPath("userData") + "/updateInfo.txt");
+              fileHelper.writeFile(
+                app.getPath("userData") + "/updateInfo.txt",
+                JSON.stringify({
+                  version: read.version,
+                  releaseName: read.releaseName,
+                  releaseNotes: read.releaseNotes,
+                  releaseDate: read.releaseDate
+                })
+              );
+
               updateData = read;
               log.info("releaseName : " + read.releaseName);
               log.info("releaseNotes : " + read.releaseNotes);
@@ -948,6 +1074,15 @@ if (!isLock) {
       app.quit();
     }
   });
+
+  app.on("quit", async () => {
+    try {
+      await NET.logout();
+    }
+    catch(e) {
+      log.log(">> Program quit event : ", e);
+    }
+  })
 
   app.on("activate", () => {
     win.show();
