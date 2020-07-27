@@ -1,8 +1,9 @@
 import React, { Component } from "react";
 import styled, { keyframes } from "styled-components";
 import Button from "../../components/Button";
-import Checkbox from "./checkbox";
+import Checkbox from "../../components/checkbox";
 import config from "../../configs/config";
+import { isBoolean } from "lodash";
 const logoImage = require("../../assets/image/NAS Server Logo.png");
 
 const LoadingWrapper = styled.div`
@@ -122,8 +123,16 @@ export default class Login extends Component {
   };
   ipcRenderer;
 
+  _local_id_ = "";
+  _local_pw_ = "";
+  _local_is_tel = "";
+
   componentDidMount() {
     this.ipcRenderer = window.require("electron").ipcRenderer;
+
+    const _famoz_id_ = "_FAMOZ_ID_";
+    const _famoz_pw_ = "_FAMOZ_PW_";
+    const _famoz_is_tel_ = "_FAMOZ_TEL_";
 
     this.ipcRenderer.on("login_res", (event, res) => {
       if (res.success) {
@@ -133,19 +142,38 @@ export default class Login extends Component {
         else {
           this.props.setServerPathHandler(config.SERVER_PATH_MAIN);
         }
+        localStorage.setItem(_famoz_id_, this.state.id);
+        localStorage.setItem(_famoz_pw_, this.state.pw);
+        localStorage.setItem(_famoz_is_tel_, this.state.isTel);
         this.props.setStateHandler("isLogin", true);
       } else {
         if(res.type == 0) {
           this.setState({ loading: false, failLogin: true, failMessage: "! 아이디와 비밀번호를 다시 확인해 주세요." });
         }
         else if(res.type == 1) {
-          this.setState({ loading: false, failLogin: true, failMessage: "! 재택근무환경을 확인하세요." });
+          this.setState({ loading: false, failLogin: true, failMessage: "! 외부 환경을 확인하세요." });
         }
         else {
           this.setState({ loading: false, failLogin: true, failMessage: "! Unknown" });
         }
       }
     });
+
+    // 자동 로그인 시작
+    const autoLogin = localStorage.getItem("_FAMOZ_AUTO_LOGIN_");
+    console.log("autoLogin : ", autoLogin);
+    if(autoLogin != null && autoLogin == "START") {
+      if(localStorage.getItem(_famoz_id_) != undefined && localStorage.getItem(_famoz_pw_) != undefined) {        
+        const tel = localStorage.getItem(_famoz_is_tel_) == undefined ? false : (localStorage.getItem(_famoz_is_tel_) === "true");
+        this.setState({
+          id: localStorage.getItem(_famoz_id_),
+          pw: localStorage.getItem(_famoz_pw_),
+          isTel: tel
+        }, () => {
+          this.login();
+        });
+      }
+    }
   }
   
   handleIDChange = (e, target) => {
@@ -222,7 +250,7 @@ export default class Login extends Component {
             <LoginButton onClick={(e) => { this.login(); }} type="submit">로그인</LoginButton> 
             <CheckPanel>
               <Checkbox checked={this.state.isTel} onChange={this.handleCheckboxChange}/>
-              <MiniSpanLabel>※ 재택근무 환경이라면 반드시 체크해 주세요.</MiniSpanLabel>
+              <MiniSpanLabel>※ 외부 환경이라면 반드시 체크해 주세요.</MiniSpanLabel>
             </CheckPanel>
             { this.loginFailed() }
         </Wrapper>

@@ -5,6 +5,7 @@ import { inject } from "mobx-react";
 import FileSend from "./FileSend";
 import SearchFile from "./SearchFile";
 import Footer from "../../system/Footer/Footer";
+import AutoLoginFooter from "../../system/AutoLoginFooter/index";
 
 const Wrapper = styled.div`
   height: 100%;
@@ -14,12 +15,13 @@ const Wrapper = styled.div`
 
 const ContentsWrapper = styled.div`
   width: 100%;
-  height: calc(100% - 17rem);
+  height: calc(100% - 20rem);
   overflow: hidden;
   box-sizing: border-box;
   padding: 0rem 1.5rem;
   background-color: white;
 `;
+
 
 @inject(stores => ({
   isDefault: stores.main.isDefault
@@ -38,11 +40,13 @@ class Main extends Component {
     else return <SearchFile />;
   };
 
+
   render() {
     return (
       <Wrapper>
         <ContentsWrapper>{this.renderPage()}</ContentsWrapper>
         <Footer />
+        <AutoLoginFooter />
       </Wrapper>
     );
   }

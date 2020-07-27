@@ -15,8 +15,8 @@ const Icon = styled.svg`
 const HiddenCheckbox = styled.input.attrs({ type: "checkbox" })`
   border: 0;
   /* clip: rect(0 0 0 0); */
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.3rem;
+  height: 1.3rem;
   opacity: 0;
   margin: 0;
   padding: 0;
@@ -25,9 +25,9 @@ const HiddenCheckbox = styled.input.attrs({ type: "checkbox" })`
 `;
 
 const StyledCheckbox = styled.div`
-  width: 1.5rem;
-  height: 1.5rem;
-  background: ${props => (props.checked ? "#929fb0" : "#cfdced")};
+  width: 1.3rem;
+  height: 1.3rem;
+  background: ${props => (props.checked ? "#929fb0" : "#b4b4b5")};
   border-radius: 0.2rem;
   transition: all 150ms;
 

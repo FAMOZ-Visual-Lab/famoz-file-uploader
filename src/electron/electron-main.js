@@ -756,7 +756,7 @@ if (!isLock) {
   function setDefaultDisplay() {
     const { width, height } = electron.screen.getPrimaryDisplay().size;
     win.setAlwaysOnTop(true);
-    win.setBounds({ x: width - 350, y: height - 480, width: 350, height: 440 });
+    win.setBounds({ x: width - 350, y: height - 510, width: 350, height: 470 });
   }
 
   function setPopupDisplay() {
@@ -1020,7 +1020,7 @@ if (!isLock) {
 
             tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
             tray.setContextMenu(contextMenu);
-            tray.setHighlightMode("always");
+            // tray.setHighlightMode("always");
           }
         });
 
@@ -1053,7 +1053,7 @@ if (!isLock) {
 
         tray.setToolTip("파모즈 파일 관리자 앱 입니다.");
         tray.setContextMenu(contextMenu);
-        tray.setHighlightMode("always");
+        // tray.setHighlightMode("always");
       }
     } catch (error) {
       log.info("autoupdate failed");
