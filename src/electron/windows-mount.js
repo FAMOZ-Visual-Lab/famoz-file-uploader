@@ -192,7 +192,8 @@ WindowsNetwork.mount = async (drivePath, driveLetter, username, password) => {
             }
             let mountCommand = "net use " + driveLetter + ": \"" + drivePath + "\" /P:Yes";
             if (username != undefined && password != undefined) {
-                mountCommand += " /user:" + username + " \"" + password + "\"";
+                // mountCommand += " /user:" + username + "\" \"" + password + "\"";
+                mountCommand = mountCommand + ` /user:"${username}" "${password}"`;
             }
             const result = await exec(mountCommand, { maxBuffer: MAX_BUFFER_SIZE });
             assertIfNonEmptyString(result.stderr);
